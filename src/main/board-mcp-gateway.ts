@@ -136,6 +136,10 @@ async function handleHttpRequest(win: BrowserWindow, req: http.IncomingMessage, 
     const tool = typeof body.tool === 'string' ? body.tool : '';
     const args = isRecord(body.args) ? body.args : {};
     const response = await forwardBoardToolRequest(win, binding.sessionId, tool, args);
+    if (isErrorResponse(response)) {
+      writeJson(res, statusForError(response.error.code), response);
+      return;
+    }
     writeJson(res, 200, response);
   } catch (error) {
     writeJson(res, 400, { ok: false, error: { code: 'bad_request', message: error instanceof Error ? error.message : 'bad request' } });
@@ -229,6 +233,28 @@ function readJsonFile(filePath: string): Record<string, unknown> {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isErrorResponse(value: unknown): value is { ok: false; error: { code: string; message: string } } {
+  return isRecord(value)
+    && value.ok === false
+    && isRecord(value.error)
+    && typeof value.error.code === 'string'
+    && typeof value.error.message === 'string';
+}
+
+function statusForError(code: string): number {
+  switch (code) {
+    case 'permission_denied':
+      return 403;
+    case 'not_found':
+      return 404;
+    case 'invalid_state':
+    case 'validation_error':
+      return 400;
+    default:
+      return 500;
+  }
 }
 
 function escapeRegExp(value: string): string {

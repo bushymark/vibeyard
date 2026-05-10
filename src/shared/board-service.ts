@@ -98,6 +98,16 @@ export function createBoardTask(board: BoardData, input: Partial<BoardTask>, con
 export function updateBoardTask(board: BoardData, taskId: string, input: Partial<BoardTask>, context: BoardMutationContext): BoardTask {
   const task = findTask(board, taskId);
   const before = snapshotTask(task);
+  if (input.columnId !== undefined && input.columnId !== task.columnId) {
+    const target = board.columns.find(c => c.id === input.columnId);
+    if (target) {
+      const order = nextOrder(board, target.id);
+      shiftOut(board, task);
+      shiftIn(board, target.id, order, task.id);
+      task.columnId = target.id;
+      task.order = order;
+    }
+  }
   if (input.title !== undefined) {
     const title = input.title.trim();
     if (!title) throw new BoardServiceError('validation_error', 'title is required');

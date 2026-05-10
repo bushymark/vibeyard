@@ -45,8 +45,14 @@ export async function callBoardGateway(port: string, token: string, tool: string
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ token, tool, args }),
   });
-  if (!response.ok) throw new Error(`Board gateway failed: ${response.status}`);
-  return response.json();
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = isErrorPayload(payload) ? payload.error.message : `Board gateway failed: ${response.status}`;
+    const error = new Error(message);
+    (error as Error & { code?: string }).code = isErrorPayload(payload) ? payload.error.code : undefined;
+    throw error;
+  }
+  return payload;
 }
 
 export async function startBoardMcpStdioServer(): Promise<void> {
@@ -86,6 +92,14 @@ function isNonEmptyString(value: unknown): value is string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isErrorPayload(value: unknown): value is { ok: false; error: { code: string; message: string } } {
+  return isRecord(value)
+    && value.ok === false
+    && isRecord(value.error)
+    && typeof value.error.code === 'string'
+    && typeof value.error.message === 'string';
 }
 
 if (require.main === module) {

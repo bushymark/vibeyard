@@ -48,6 +48,14 @@ describe('BoardService', () => {
     expect(data.audit?.[0]).toMatchObject({ action: 'update', taskId: 'task-a' });
   });
 
+  it('moves tasks when update includes a new columnId', () => {
+    const data = board();
+    const task = updateBoardTask(data, 'task-a', { columnId: 'col-ready' }, context);
+    expect(task.columnId).toBe('col-ready');
+    expect(task.order).toBe(0);
+    expect(data.tasks.find(t => t.id === 'task-b')?.columnId).toBe('col-running');
+  });
+
   it('moves by semantic state alias', () => {
     const data = board();
     const task = moveBoardTask(data, 'task-a', { state: 'running' }, context);
