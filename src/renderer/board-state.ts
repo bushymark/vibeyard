@@ -1,5 +1,12 @@
 import { appState } from './state.js';
 import type { BoardTask, BoardColumn, BoardData, ColumnBehavior, TagDefinition } from '../shared/types.js';
+import {
+  BoardServiceError,
+  createBoardTask,
+  deleteBoardTask,
+  moveBoardTask,
+  updateBoardTask,
+} from '../shared/board-service.js';
 
 export function getBoard(): BoardData | undefined {
   return appState.activeProject?.board;
@@ -35,92 +42,59 @@ export function addTask(partial: Partial<BoardTask>): BoardTask | undefined {
   const board = getBoard();
   if (!board) return undefined;
 
-  const columnId = partial.columnId ?? getColumnByBehavior('inbox')?.id ?? board.columns[0]?.id;
-  if (!columnId) return undefined;
-
-  const tasksInColumn = board.tasks.filter(t => t.columnId === columnId);
-  const maxOrder = tasksInColumn.reduce((max, t) => Math.max(max, t.order), -1);
-
-  const now = Date.now();
-  const taskId = partial.id ?? crypto.randomUUID();
-  const task: BoardTask = {
-    id: taskId,
-    title: partial.title ?? '',
-    prompt: partial.prompt ?? '',
-    columnId,
-    order: maxOrder + 1,
-    createdAt: partial.createdAt || now,
-    updatedAt: now,
-    ...(partial.notes ? { notes: partial.notes } : {}),
-    ...(partial.tags && partial.tags.length > 0 ? { tags: partial.tags } : {}),
-    ...(partial.providerId ? { providerId: partial.providerId } : {}),
-    ...(partial.planMode !== undefined ? { planMode: partial.planMode } : {}),
-  };
-
-  board.tasks.push(task);
-  appState.notifyBoardChanged();
-  return task;
+  try {
+    const task = createBoardTask(board, partial, uiContext());
+    appState.notifyBoardChanged();
+    return task;
+  } catch (error) {
+    if (error instanceof BoardServiceError) return undefined;
+    throw error;
+  }
 }
 
 export function updateTask(taskId: string, updates: Partial<BoardTask>): void {
   const board = getBoard();
   if (!board) return;
-  const task = board.tasks.find(t => t.id === taskId);
-  if (!task) return;
-  const safeUpdates = { ...updates };
-  if (safeUpdates.columnId && !board.columns.some(c => c.id === safeUpdates.columnId)) {
-    delete safeUpdates.columnId;
+  try {
+    const task = updateBoardTask(board, taskId, updates, uiContext());
+    if ('sessionId' in updates) task.sessionId = updates.sessionId;
+    if ('cliSessionId' in updates) task.cliSessionId = updates.cliSessionId;
+    appState.notifyBoardChanged();
+  } catch (error) {
+    if (error instanceof BoardServiceError) return;
+    throw error;
   }
-  Object.assign(task, safeUpdates, { updatedAt: Date.now() });
-  appState.notifyBoardChanged();
 }
 
 export function deleteTask(taskId: string): void {
   const board = getBoard();
   if (!board) return;
-  const task = board.tasks.find(t => t.id === taskId);
-  if (!task) return;
-
-  const columnId = task.columnId;
-  const order = task.order;
-  board.tasks = board.tasks.filter(t => t.id !== taskId);
-
-  board.tasks
-    .filter(t => t.columnId === columnId && t.order > order)
-    .forEach(t => t.order--);
-
-  appState.notifyBoardChanged();
+  try {
+    deleteBoardTask(board, taskId, { confirm: true }, uiContext());
+    appState.notifyBoardChanged();
+  } catch (error) {
+    if (error instanceof BoardServiceError) return;
+    throw error;
+  }
 }
 
 export function moveTask(taskId: string, toColumnId: string, toOrder: number): void {
   const board = getBoard();
   if (!board) return;
-  const task = board.tasks.find(t => t.id === taskId);
-  if (!task) return;
-  if (!board.columns.some(c => c.id === toColumnId)) return;
-
-  const fromColumnId = task.columnId;
-
-  if (fromColumnId !== toColumnId) {
-    board.tasks
-      .filter(t => t.columnId === fromColumnId && t.order > task.order)
-      .forEach(t => t.order--);
-  } else {
-    // Same column: remove from current position first
-    board.tasks
-      .filter(t => t.columnId === fromColumnId && t.id !== taskId && t.order > task.order)
-      .forEach(t => t.order--);
+  try {
+    moveBoardTask(board, taskId, { columnId: toColumnId, order: toOrder }, uiContext());
+    appState.notifyBoardChanged();
+  } catch (error) {
+    if (error instanceof BoardServiceError) return;
+    throw error;
   }
+}
 
-  board.tasks
-    .filter(t => t.columnId === toColumnId && t.order >= toOrder && t.id !== taskId)
-    .forEach(t => t.order++);
-
-  task.columnId = toColumnId;
-  task.order = toOrder;
-  task.updatedAt = Date.now();
-
-  appState.notifyBoardChanged();
+function uiContext() {
+  return {
+    actorSessionId: appState.activeProject?.activeSessionId ?? 'ui',
+    providerId: appState.activeSession?.providerId,
+  };
 }
 
 export function addColumn(title: string, afterColumnId?: string): BoardColumn | undefined {
@@ -286,4 +260,3 @@ export function getTagCount(tagName: string): number {
   if (!board) return 0;
   return board.tasks.filter(t => t.tags?.includes(tagName)).length;
 }
-

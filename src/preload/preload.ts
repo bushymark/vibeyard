@@ -5,6 +5,10 @@ import { ZOOM_MIN, ZOOM_MAX } from '../shared/types';
 export type { CostData } from '../shared/types';
 
 export interface VibeyardApi {
+  board: {
+    onAgentRequest(callback: (request: { requestId: string; sessionId: string; tool: string; args: Record<string, unknown> }) => void | Promise<void>): () => void;
+    respondAgentRequest(requestId: string, response: unknown): void;
+  };
   pty: {
     create(sessionId: string, cwd: string, cliSessionId: string | null, isResume: boolean, extraArgs?: string, providerId?: ProviderId, initialPrompt?: string, systemPrompt?: string): Promise<void>;
     createShell(sessionId: string, cwd: string): Promise<void>;
@@ -154,6 +158,12 @@ function onChannel(channel: string, callback: (...args: unknown[]) => void): () 
 }
 
 const api: VibeyardApi = {
+  board: {
+    onAgentRequest: (callback) =>
+      onChannel('board:agentRequest', (request) => callback(request as { requestId: string; sessionId: string; tool: string; args: Record<string, unknown> })),
+    respondAgentRequest: (requestId, response) =>
+      ipcRenderer.send('board:agentResponse', requestId, response),
+  },
   pty: {
     create: (sessionId, cwd, cliSessionId, isResume, extraArgs, providerId, initialPrompt, systemPrompt) =>
       ipcRenderer.invoke('pty:create', sessionId, cwd, cliSessionId, isResume, extraArgs || '', providerId || 'claude', initialPrompt, systemPrompt),

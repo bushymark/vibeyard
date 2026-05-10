@@ -212,10 +212,29 @@ export interface TagDefinition {
   color: string;
 }
 
+export type BoardAuditAction = 'create' | 'update' | 'move' | 'delete';
+
+export interface BoardAuditEntry {
+  id: string;
+  action: BoardAuditAction;
+  taskId: string;
+  actorSessionId: string;
+  providerId?: ProviderId;
+  createdAt: number;
+  before?: Record<string, unknown>;
+  after?: Record<string, unknown>;
+  tombstone?: {
+    title: string;
+    columnId: string;
+    tags?: string[];
+  };
+}
+
 export interface BoardData {
   columns: BoardColumn[];
   tasks: BoardTask[];
   tags?: TagDefinition[];
+  audit?: BoardAuditEntry[];
 }
 
 export interface ProjectRecord {

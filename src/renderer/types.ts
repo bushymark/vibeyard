@@ -2,6 +2,10 @@ export type { McpServer, Agent, Skill, Command, ProviderConfig, ClaudeConfig, Gi
 import type { CostData, ProviderConfig, GitWorktree, McpResult, ProviderId, CliProviderMeta, StatsCache, ReadinessResult } from '../shared/types.js';
 
 export interface VibeyardApi {
+  board: {
+    onAgentRequest(callback: (request: { requestId: string; sessionId: string; tool: string; args: Record<string, unknown> }) => void | Promise<void>): () => void;
+    respondAgentRequest(requestId: string, response: unknown): void;
+  };
   pty: {
     create(sessionId: string, cwd: string, cliSessionId: string | null, isResume: boolean, extraArgs?: string, providerId?: ProviderId, initialPrompt?: string, systemPrompt?: string): Promise<void>;
     createShell(sessionId: string, cwd: string): Promise<void>;
