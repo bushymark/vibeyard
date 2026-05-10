@@ -14,7 +14,7 @@ const CONFIG_TOML_PATH = path.join(CODEX_DIR, 'config.toml');
 
 export const SESSION_ID_VAR = 'VIBEYARD_SESSION_ID';
 
-const EXPECTED_HOOK_EVENTS = ['SessionStart', 'UserPromptSubmit', 'PostToolUse', 'Stop'];
+const EXPECTED_HOOK_EVENTS = ['SessionStart', 'UserPromptSubmit', 'PostToolUse', 'Stop', 'PermissionRequest'];
 
 interface HookHandler {
   type: string;
@@ -165,6 +165,7 @@ with open(os.path.join(status_dir,sid+".events"),"a") as f:
     UserPromptSubmit: 'working',
     PostToolUse: 'working',
     Stop: 'completed',
+    PermissionRequest: 'input',
   };
 
   const eventTypeMap: Record<string, InspectorEventType> = {
@@ -172,6 +173,7 @@ with open(os.path.join(status_dir,sid+".events"),"a") as f:
     UserPromptSubmit: 'user_prompt',
     PostToolUse: 'tool_use',
     Stop: 'stop',
+    PermissionRequest: 'permission_request',
   };
 
   for (const [event, status] of Object.entries(ideEvents)) {

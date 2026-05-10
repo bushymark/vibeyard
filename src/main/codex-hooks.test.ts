@@ -118,7 +118,7 @@ describe('installCodexHooks', () => {
     });
   });
 
-  it('creates hooks.json with all 5 events on fresh install', () => {
+  it('creates hooks.json with all 6 events on fresh install', () => {
     installCodexHooks();
 
     const hooksCall = mockWriteFileSync.mock.calls.find(c => String(c[0]) === HOOKS_JSON);
@@ -130,6 +130,7 @@ describe('installCodexHooks', () => {
     expect(hooks.UserPromptSubmit).toBeDefined();
     expect(hooks.PostToolUse).toBeDefined();
     expect(hooks.Stop).toBeDefined();
+    expect(hooks.PermissionRequest).toBeDefined();
     expect(hooks.PreToolUse).toBeDefined();
   });
 
@@ -148,6 +149,7 @@ describe('installCodexHooks', () => {
     expect(getStatusCmd('UserPromptSubmit')).toContain('UserPromptSubmit:working');
     expect(getStatusCmd('PostToolUse')).toContain('PostToolUse:working');
     expect(getStatusCmd('Stop')).toContain('Stop:completed');
+    expect(getStatusCmd('PermissionRequest')).toContain('PermissionRequest:input');
   });
 
   it('includes session ID capture on SessionStart and UserPromptSubmit only', () => {
@@ -165,6 +167,7 @@ describe('installCodexHooks', () => {
     expect(hasSessionIdCapture('UserPromptSubmit')).toBe(true);
     expect(hasSessionIdCapture('PostToolUse')).toBe(false);
     expect(hasSessionIdCapture('Stop')).toBe(false);
+    expect(hasSessionIdCapture('PermissionRequest')).toBe(false);
   });
 
   it('all hook commands contain the vibeyard marker', () => {
@@ -250,7 +253,7 @@ describe('installCodexHooks', () => {
     const firstParsed = JSON.parse(firstOutput);
 
     // Same number of matcher groups per event
-    for (const event of ['SessionStart', 'UserPromptSubmit', 'PostToolUse', 'Stop', 'PreToolUse']) {
+    for (const event of ['SessionStart', 'UserPromptSubmit', 'PostToolUse', 'Stop', 'PermissionRequest', 'PreToolUse']) {
       expect(secondOutput.hooks[event]?.length).toBe(firstParsed.hooks[event]?.length);
     }
   });
@@ -297,6 +300,7 @@ describe('validateCodexHooks', () => {
     expect(result.hookDetails.UserPromptSubmit).toBe(true);
     expect(result.hookDetails.PostToolUse).toBe(true);
     expect(result.hookDetails.Stop).toBe(true);
+    expect(result.hookDetails.PermissionRequest).toBe(true);
   });
 
   it('returns missing when feature flag is not set', () => {
@@ -343,6 +347,7 @@ describe('validateCodexHooks', () => {
     expect(result.hookDetails.UserPromptSubmit).toBe(true);
     expect(result.hookDetails.PostToolUse).toBe(false);
     expect(result.hookDetails.Stop).toBe(false);
+    expect(result.hookDetails.PermissionRequest).toBe(false);
   });
 });
 

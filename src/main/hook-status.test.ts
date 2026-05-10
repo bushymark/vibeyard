@@ -141,6 +141,17 @@ describe('hook-status', () => {
       expect(mockSend).toHaveBeenCalledWith('session:hookStatus', 'abc123', 'working', 'PostToolUse');
     });
 
+    it('.status with PermissionRequest input sends session:hookStatus with input status', () => {
+      const win = createMockWin();
+      startWatching(win);
+      registerSession('abc123');
+
+      vi.mocked(fs.readFileSync).mockReturnValue('PermissionRequest:input');
+      watchCallback!('change', 'abc123.status');
+
+      expect(mockSend).toHaveBeenCalledWith('session:hookStatus', 'abc123', 'input', 'PermissionRequest');
+    });
+
     it('.status with invalid content does not send', () => {
       const win = createMockWin();
       startWatching(win);
