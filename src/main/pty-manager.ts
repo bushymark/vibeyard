@@ -195,11 +195,12 @@ export async function spawnPty(
     }
   }
 
-  ensureProviderBoardMcpConfig(providerId, cwd, boardMcpServerScriptPath());
   const token = createBoardSessionBinding(sessionId);
+  const boardMcpPort = String(getBoardMcpGatewayPort() ?? '');
+  ensureProviderBoardMcpConfig(providerId, cwd, boardMcpServerScriptPath(), { token, port: boardMcpPort });
   const env = provider.buildEnv(sessionId, { ...process.env } as Record<string, string>);
   env.VIBEYARD_BOARD_SESSION_TOKEN = token;
-  env.VIBEYARD_BOARD_MCP_PORT = String(getBoardMcpGatewayPort() ?? '');
+  env.VIBEYARD_BOARD_MCP_PORT = boardMcpPort;
   const args = provider.buildArgs({ cliSessionId, isResume, extraArgs, initialPrompt, systemPrompt });
   const resolvedShell = provider.resolveBinaryPath();
   const { shell, args: spawnArgs } = resolveWindowsShell(resolvedShell, args);

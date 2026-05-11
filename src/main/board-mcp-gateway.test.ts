@@ -35,9 +35,30 @@ describe('ensureProviderBoardMcpConfig', () => {
     const writes: Array<[string, string]> = [];
     vi.mocked(fs.mkdirSync).mockImplementation(() => undefined as any);
     vi.mocked(fs.writeFileSync).mockImplementation((file, data) => { writes.push([String(file), String(data)]); });
-    ensureProviderBoardMcpConfig('claude', '/repo', '/dist/main/board-mcp-stdio.js');
+    ensureProviderBoardMcpConfig('claude', '/repo', '/dist/main/board-mcp-stdio.js', { token: 'token-1', port: '1234' });
     expect(writes[0][0]).toBe(path.join('/repo', '.mcp.json'));
-    expect(JSON.parse(writes[0][1]).mcpServers['vibeyard-board']).toMatchObject({ command: 'node', args: ['/dist/main/board-mcp-stdio.js'] });
+    expect(JSON.parse(writes[0][1]).mcpServers['vibeyard-board']).toMatchObject({
+      command: 'node',
+      args: ['/dist/main/board-mcp-stdio.js'],
+      env: {
+        VIBEYARD_BOARD_SESSION_TOKEN: 'token-1',
+        VIBEYARD_BOARD_MCP_PORT: '1234',
+      },
+    });
+  });
+
+  it('writes Codex project config with board server environment', () => {
+    vi.mocked(os.homedir).mockReturnValue('/home/me');
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    const writes: Array<[string, string]> = [];
+    vi.mocked(fs.mkdirSync).mockImplementation(() => undefined as any);
+    vi.mocked(fs.writeFileSync).mockImplementation((file, data) => { writes.push([String(file), String(data)]); });
+    ensureProviderBoardMcpConfig('codex', '/repo', '/dist/main/board-mcp-stdio.js', { token: 'token-1', port: '1234' });
+    expect(writes[0][0]).toBe(path.join('/repo', '.codex', 'config.toml'));
+    expect(writes[0][1]).toContain('[mcp_servers.vibeyard-board]');
+    expect(writes[0][1]).toContain('command = "node"');
+    expect(writes[0][1]).toContain('args = ["/dist/main/board-mcp-stdio.js"]');
+    expect(writes[0][1]).toContain('env = { VIBEYARD_BOARD_SESSION_TOKEN = "token-1", VIBEYARD_BOARD_MCP_PORT = "1234" }');
   });
 });
 

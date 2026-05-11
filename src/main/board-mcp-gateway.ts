@@ -6,6 +6,11 @@ import * as path from 'path';
 import type { ProviderId } from '../shared/types';
 
 const SERVER_NAME = 'vibeyard-board';
+interface BoardMcpEnv {
+  token: string;
+  port: string;
+}
+
 const bindings = new Map<string, { sessionId: string }>();
 const pending = new Map<string, (response: unknown) => void>();
 let server: http.Server | null = null;
@@ -78,19 +83,19 @@ export async function forwardBoardToolRequest(
   });
 }
 
-export function ensureProviderBoardMcpConfig(providerId: ProviderId, projectPath: string, serverScriptPath: string): void {
+export function ensureProviderBoardMcpConfig(providerId: ProviderId, projectPath: string, serverScriptPath: string, env: BoardMcpEnv): void {
   switch (providerId) {
     case 'claude':
-      writeJsonMcpConfig(path.join(projectPath, '.mcp.json'), serverScriptPath);
+      writeJsonMcpConfig(path.join(projectPath, '.mcp.json'), serverScriptPath, env);
       break;
     case 'copilot':
-      writeJsonMcpConfig(path.join(projectPath, '.copilot', 'mcp-config.json'), serverScriptPath);
+      writeJsonMcpConfig(path.join(projectPath, '.copilot', 'mcp-config.json'), serverScriptPath, env);
       break;
     case 'gemini':
-      writeJsonMcpConfig(path.join(projectPath, '.gemini', 'settings.json'), serverScriptPath);
+      writeJsonMcpConfig(path.join(projectPath, '.gemini', 'settings.json'), serverScriptPath, env);
       break;
     case 'codex':
-      writeCodexMcpConfig(path.join(projectPath, '.codex', 'config.toml'), serverScriptPath);
+      writeCodexMcpConfig(path.join(projectPath, '.codex', 'config.toml'), serverScriptPath, env);
       break;
   }
 }
@@ -189,7 +194,14 @@ function writeJson(res: http.ServerResponse, statusCode: number, payload: unknow
   res.end(JSON.stringify(payload));
 }
 
-function writeJsonMcpConfig(filePath: string, serverScriptPath: string): void {
+function boardMcpEnv(env: BoardMcpEnv): Record<string, string> {
+  return {
+    VIBEYARD_BOARD_SESSION_TOKEN: env.token,
+    VIBEYARD_BOARD_MCP_PORT: env.port,
+  };
+}
+
+function writeJsonMcpConfig(filePath: string, serverScriptPath: string, env: BoardMcpEnv): void {
   const existing = readJsonFile(filePath);
   const next = {
     ...existing,
@@ -198,6 +210,7 @@ function writeJsonMcpConfig(filePath: string, serverScriptPath: string): void {
       [SERVER_NAME]: {
         command: 'node',
         args: [serverScriptPath],
+        env: boardMcpEnv(env),
       },
     },
   };
@@ -205,11 +218,12 @@ function writeJsonMcpConfig(filePath: string, serverScriptPath: string): void {
   fs.writeFileSync(filePath, `${JSON.stringify(next, null, 2)}\n`);
 }
 
-function writeCodexMcpConfig(filePath: string, serverScriptPath: string): void {
+function writeCodexMcpConfig(filePath: string, serverScriptPath: string, env: BoardMcpEnv): void {
   const block = [
     `[mcp_servers.${SERVER_NAME}]`,
     `command = "node"`,
     `args = [${JSON.stringify(serverScriptPath)}]`,
+    `env = { VIBEYARD_BOARD_SESSION_TOKEN = ${JSON.stringify(env.token)}, VIBEYARD_BOARD_MCP_PORT = ${JSON.stringify(env.port)} }`,
   ].join('\n');
   const existing = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
   const replaced = existing.replace(
