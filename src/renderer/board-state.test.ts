@@ -103,6 +103,15 @@ describe('board-state', () => {
       const task = addTask({ title: 'T', prompt: 'p', columnId: 'col-ready' });
       expect(task!.columnId).toBe('col-ready');
     });
+
+    it('addTask records audit and notifies board change', () => {
+      const spy = vi.fn();
+      appState.on('board-changed', spy);
+      const task = addTask({ title: 'Audit me', prompt: 'p' })!;
+      expect(task.title).toBe('Audit me');
+      expect(getBoard()!.audit?.[0]).toMatchObject({ action: 'create', taskId: task.id });
+      expect(spy).toHaveBeenCalled();
+    });
   });
 
   describe('updateTask', () => {
@@ -226,6 +235,15 @@ describe('board-state', () => {
       const task = addTask({ title: 'Test', prompt: 'p' })!;
       moveTask(task.id, 'non-existent-column', 0);
       expect(task.columnId).toBe('col-backlog'); // unchanged
+    });
+
+    it('moveTask delegates ordering to BoardService', () => {
+      const t1 = addTask({ title: 'One', prompt: 'p', columnId: 'col-backlog' })!;
+      const t2 = addTask({ title: 'Two', prompt: 'p', columnId: 'col-backlog' })!;
+      moveTask(t2.id, 'col-running', 0);
+      moveTask(t1.id, 'col-running', 0);
+      const running = getBoard()!.tasks.filter(t => t.columnId === 'col-running').sort((a, b) => a.order - b.order);
+      expect(running.map(t => t.id)).toEqual([t1.id, t2.id]);
     });
   });
 

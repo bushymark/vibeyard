@@ -13,5 +13,5 @@
     "composite": true
   },
   "include": ["src/main/**/*.ts", "src/shared/**/*.ts"],
-  "exclude": ["src/main/**/*.test.ts"]
+  "exclude": ["src/**/*.test.ts"]
 }

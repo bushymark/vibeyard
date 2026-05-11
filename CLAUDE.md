@@ -59,6 +59,10 @@ CLI-specific behavior is encapsulated behind a `CliProvider` interface (`src/mai
 - **System prompt**: `buildArgs` accepts `systemPrompt?: string` and every provider must honor it (used by the Team feature). Claude maps it to `--append-system-prompt`; Codex to `-c developer_instructions=<value>`; Copilot/Gemini to `--system-prompt`. The renderer passes it via the transient `pendingSystemPrompt` field on `SessionRecord`, which is consumed once on the first PTY spawn and stripped from `state.json` so it is never re-injected on resume.
 - **Agent files**: providers expose optional `agentsDir()`, `installAgent(slug, content)`, and `removeAgent(slug)` methods (default impls delegate to `src/main/providers/agent-files.ts`, which accepts an optional extension — Copilot passes `.agent.md`; everyone else uses the default `.md`). Each provider's user-global agents directory is `~/.<cli>/agents/` (e.g. `~/.claude/agents/`). The Team feature uses these via the `provider:installAgent` / `provider:removeAgent` IPC channels to mirror a `TeamMember` (with `installAsAgent: true`) as a `<slug>.md` (or `<slug>.agent.md` for Copilot) file across every installed provider, making it invokable as `/<slug>` inside CLI sessions. Slug is sticky on the member (`agentSlug` field) so renames preserve the same file. Filename collisions with non-Vibeyard agents at the same slug will overwrite — the renderer only deduplicates within team members.
 
+### Agent Kanban board MCP surface
+
+Vibeyard exposes current-project Kanban board operations to in-session agents through the managed `vibeyard-board` MCP server. The tool surface is scoped by a session token injected when Vibeyard launches the CLI provider. Agents can search, list columns, create, update, move, and delete single board tasks. Deletes require `confirm: true`; cross-project access and bulk mutation are intentionally unsupported.
+
 ### Key Components
 
 - `terminal-pane.ts` — xterm.js wrapper per session, handles PTY data streaming and WebGL rendering with software fallback

@@ -83,6 +83,10 @@ CLI-specific behavior is encapsulated behind the `CliProvider` interface in `src
 - **System prompt:** `buildArgs` accepts an optional `systemPrompt`. Providers map it to their CLI's flag (Claude: `--append-system-prompt`; Codex: `-c developer_instructions=…`; Copilot/Gemini: `--system-prompt`). The renderer hands it over via `pendingSystemPrompt` on `SessionRecord`, which is consumed once and stripped from `state.json`.
 - **Agent files:** providers expose `agentsDir()`, `installAgent(slug, content)`, `removeAgent(slug)`. Default impls live in `providers/agent-files.ts`. The Team feature uses these to mirror a `TeamMember` (with `installAsAgent: true`) as `<slug>.md` (Copilot uses `.agent.md`) under each provider's user-global agents dir.
 
+### Agent Kanban board MCP surface
+
+Vibeyard exposes current-project Kanban board operations to in-session agents through the managed `vibeyard-board` MCP server. The tool surface is scoped by a session token injected when Vibeyard launches the CLI provider. Agents can search, list columns, create, update, move, and delete single board tasks. Deletes require `confirm: true`; cross-project access and bulk mutation are intentionally unsupported.
+
 ### State persistence
 
 App state (projects, sessions, layout, team, board) persists to `~/.vibeyard/state.json` via `src/main/store.ts`. Saves are debounced and flushed on quit. Sessions track `cliSessionId` for resume.

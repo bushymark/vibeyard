@@ -7,6 +7,12 @@ import { getProvider } from './providers/registry';
 import { registerSession } from './hook-status';
 import { isWin, pathSep } from './platform';
 import { nvmDefaultNodeBinDir } from './providers/nvm';
+import {
+  boardMcpServerScriptPath,
+  createBoardSessionBinding,
+  ensureProviderBoardMcpConfig,
+  getBoardMcpGatewayPort,
+} from './board-mcp-gateway';
 
 interface PtyInstance {
   process: pty.IPty;
@@ -189,7 +195,11 @@ export async function spawnPty(
     }
   }
 
+  ensureProviderBoardMcpConfig(providerId, cwd, boardMcpServerScriptPath());
+  const token = createBoardSessionBinding(sessionId);
   const env = provider.buildEnv(sessionId, { ...process.env } as Record<string, string>);
+  env.VIBEYARD_BOARD_SESSION_TOKEN = token;
+  env.VIBEYARD_BOARD_MCP_PORT = String(getBoardMcpGatewayPort() ?? '');
   const args = provider.buildArgs({ cliSessionId, isResume, extraArgs, initialPrompt, systemPrompt });
   const resolvedShell = provider.resolveBinaryPath();
   const { shell, args: spawnArgs } = resolveWindowsShell(resolvedShell, args);

@@ -11,6 +11,7 @@ import { stopGitWatcher } from './git-watcher';
 import { checkPythonAvailable } from './prerequisites';
 import { isMac } from './platform';
 import { isCloseConfirmed, setCloseConfirmed } from './close-state';
+import { startBoardMcpGateway, stopBoardMcpGateway } from './board-mcp-gateway';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -71,6 +72,7 @@ function createWindow(): void {
   mainWindow.on('closed', () => {
     killAllPtys();
     resetHookWatcher();
+    void stopBoardMcpGateway();
     mainWindow = null;
   });
 }
@@ -98,6 +100,7 @@ app.whenReady().then(async () => {
   const state = loadState();
   createAppMenu(state.preferences?.debugMode ?? false);
   createWindow();
+  await startBoardMcpGateway(mainWindow!);
 
   // Warn if Python is missing on Windows (hooks depend on it)
   const pythonWarning = checkPythonAvailable();
@@ -152,6 +155,7 @@ app.on('before-quit', (event) => {
   }
   killAllPtys();
   stopGitWatcher();
+  void stopBoardMcpGateway();
   // Cleanup all providers
   for (const provider of getAllProviders()) {
     provider.cleanup();
