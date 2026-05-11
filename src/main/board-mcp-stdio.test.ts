@@ -22,6 +22,15 @@ describe('board MCP tool definitions', () => {
     expect(validateBoardToolArgs('board_delete_item', { taskId: 't1', confirm: true })).toEqual({ taskId: 't1', confirm: true });
   });
 
+  it('declares input schemas for argument-bearing tools', () => {
+    const definitions = Object.fromEntries(boardToolDefinitions.map(tool => [tool.name, tool])) as Record<string, any>;
+    expect(definitions.board_search_items.inputSchema).toBeDefined();
+    expect(definitions.board_create_item.inputSchema.title).toBeDefined();
+    expect(definitions.board_update_item.inputSchema.taskId).toBeDefined();
+    expect(definitions.board_move_item.inputSchema.taskId).toBeDefined();
+    expect(definitions.board_delete_item.inputSchema.confirm).toBeDefined();
+  });
+
   it('throws on gateway error responses', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: false,

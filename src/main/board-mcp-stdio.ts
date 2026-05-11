@@ -1,13 +1,68 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import * as z from 'zod/v4';
 
 export const boardToolDefinitions = [
-  { name: 'board_search_items', description: 'Search current-project Vibeyard board items' },
-  { name: 'board_list_columns', description: 'List current-project Vibeyard board columns' },
-  { name: 'board_create_item', description: 'Create a current-project Vibeyard board item' },
-  { name: 'board_update_item', description: 'Update a current-project Vibeyard board item by taskId' },
-  { name: 'board_move_item', description: 'Move a current-project Vibeyard board item by taskId' },
-  { name: 'board_delete_item', description: 'Delete a current-project Vibeyard board item by taskId with confirm true' },
+  {
+    name: 'board_search_items',
+    description: 'Search current-project Vibeyard board items',
+    inputSchema: {
+      query: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      state: z.enum(['inbox', 'backlog', 'active', 'running', 'terminal', 'done']).optional(),
+      columnId: z.string().optional(),
+      includeDone: z.boolean().optional(),
+      limit: z.number().optional(),
+    },
+  },
+  {
+    name: 'board_list_columns',
+    description: 'List current-project Vibeyard board columns',
+    inputSchema: {},
+  },
+  {
+    name: 'board_create_item',
+    description: 'Create a current-project Vibeyard board item',
+    inputSchema: {
+      title: z.string(),
+      prompt: z.string().optional(),
+      notes: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      state: z.enum(['inbox', 'backlog', 'active', 'running', 'terminal', 'done']).optional(),
+      columnId: z.string().optional(),
+      planMode: z.boolean().optional(),
+    },
+  },
+  {
+    name: 'board_update_item',
+    description: 'Update a current-project Vibeyard board item by taskId',
+    inputSchema: {
+      taskId: z.string(),
+      title: z.string().optional(),
+      prompt: z.string().optional(),
+      notes: z.string().nullable().optional(),
+      tags: z.array(z.string()).optional(),
+      planMode: z.boolean().optional(),
+    },
+  },
+  {
+    name: 'board_move_item',
+    description: 'Move a current-project Vibeyard board item by taskId',
+    inputSchema: {
+      taskId: z.string(),
+      columnId: z.string().optional(),
+      state: z.enum(['inbox', 'backlog', 'active', 'running', 'terminal', 'done']).optional(),
+      order: z.number().optional(),
+    },
+  },
+  {
+    name: 'board_delete_item',
+    description: 'Delete a current-project Vibeyard board item by taskId with confirm true',
+    inputSchema: {
+      taskId: z.string(),
+      confirm: z.boolean(),
+    },
+  },
 ] as const;
 
 type BoardToolName = typeof boardToolDefinitions[number]['name'];
@@ -63,7 +118,7 @@ export async function startBoardMcpStdioServer(): Promise<void> {
 
   const server = new McpServer({ name: 'vibeyard-board', version: '1.0.0' });
   for (const definition of boardToolDefinitions) {
-    server.registerTool(definition.name, { description: definition.description }, async (args) => {
+    server.registerTool(definition.name, { description: definition.description, inputSchema: definition.inputSchema }, async (args: Record<string, unknown>) => {
       const validated = validateBoardToolArgs(definition.name, args);
       const result = await callBoardGateway(port, token, definition.name, validated);
       return {
