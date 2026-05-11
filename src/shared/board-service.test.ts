@@ -40,6 +40,12 @@ describe('BoardService', () => {
     expect(data.audit?.[0]).toMatchObject({ action: 'create', taskId: 'task-new', actorSessionId: 'session-1' });
   });
 
+  it('creates a task in a requested semantic state', () => {
+    const data = board();
+    const task = createBoardTask(data, { title: 'Done item', state: 'done' }, context);
+    expect(task.columnId).toBe('col-done');
+  });
+
   it('updates safe fields and rejects linked-session fields', () => {
     const data = board();
     const task = updateBoardTask(data, 'task-a', { title: 'A2', sessionId: 'evil' } as any, context);
@@ -48,12 +54,11 @@ describe('BoardService', () => {
     expect(data.audit?.[0]).toMatchObject({ action: 'update', taskId: 'task-a' });
   });
 
-  it('moves tasks when update includes a new columnId', () => {
+  it('does not move tasks when update includes a new columnId', () => {
     const data = board();
     const task = updateBoardTask(data, 'task-a', { columnId: 'col-ready' }, context);
-    expect(task.columnId).toBe('col-ready');
+    expect(task.columnId).toBe('col-backlog');
     expect(task.order).toBe(0);
-    expect(data.tasks.find(t => t.id === 'task-b')?.columnId).toBe('col-running');
   });
 
   it('moves by semantic state alias', () => {
