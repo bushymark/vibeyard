@@ -68,7 +68,7 @@ Vibeyard exposes current-project Kanban board operations to in-session agents th
 - `terminal-pane.ts` — xterm.js wrapper per session, handles PTY data streaming and WebGL rendering with software fallback
 - `state.ts` — Reactive AppState singleton; debounced persistence (300ms) to `~/.vibeyard/state.json`
 - `split-layout.ts` — Manages tab mode (single terminal) vs split mode (side-by-side)
-- `session-activity.ts` — Tracks working/waiting/idle status with debounced transitions
+- `session-activity.ts` — Tracks session activity states (`working`, `waiting`, `completed`, `input`, `idle`) and notifies status-light subscribers
 - `session-cost.ts` — Structured cost tracking via Claude CLI status line (`statusLine` setting), with regex fallback for older CLI versions. Provides per-session and aggregate cost data (USD, tokens, cache, duration)
 - `browser-tab/` — Browser tab pane split into focused modules: `types.ts`, `instance.ts` (registry + preload path), `navigation.ts`, `viewport.ts`, `selector-ui.ts`, `inspect-mode.ts`, `flow-recording.ts`, `flow-picker.ts`, `session-integration.ts`, and `pane.ts` (DOM build + event wiring). `browser-tab-pane.ts` is a re-export shim for backward compatibility.
 - `board-state.ts` — Kanban board CRUD: tasks, columns, tags, reorder. Mutates `appState.activeProject.board` in place, calls `appState.notifyBoardChanged()`.

@@ -117,7 +117,7 @@ App state (projects, sessions, layout, team, board) persists to `~/.vibeyard/sta
 - `src/renderer/components/project-tab/` — Overview page (gridstack-based widgets)
 - `src/renderer/components/browser-tab/` — embedded browser tab
 - `src/renderer/board-state.ts`, `board-filter.ts`, `board-session-sync.ts` — board logic
-- `src/renderer/session-activity.ts`, `session-cost.ts`, `session-context.ts` — per-session telemetry (each exposes `_resetForTesting()`)
+- `src/renderer/session-activity.ts`, `session-cost.ts`, `session-context.ts` — per-session telemetry; `session-activity.ts` owns status-light states (`working`, `waiting`, `completed`, `input`, `idle`) and each exposes `_resetForTesting()`
 - `src/renderer/styles/` — CSS by domain (kanban, team, widgets, etc.). All styles use CSS variables; no hardcoded colors
 
 ### Shared

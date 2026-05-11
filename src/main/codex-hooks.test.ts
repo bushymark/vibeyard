@@ -147,6 +147,7 @@ describe('installCodexHooks', () => {
 
     expect(getStatusCmd('SessionStart')).toContain('SessionStart:waiting');
     expect(getStatusCmd('UserPromptSubmit')).toContain('UserPromptSubmit:working');
+    expect(getStatusCmd('PreToolUse')).toBeUndefined();
     expect(getStatusCmd('PostToolUse')).toContain('PostToolUse:working');
     expect(getStatusCmd('Stop')).toContain('Stop:completed');
     expect(getStatusCmd('PermissionRequest')).toContain('PermissionRequest:input');
@@ -165,6 +166,7 @@ describe('installCodexHooks', () => {
 
     expect(hasSessionIdCapture('SessionStart')).toBe(true);
     expect(hasSessionIdCapture('UserPromptSubmit')).toBe(true);
+    expect(hasSessionIdCapture('PreToolUse')).toBe(false);
     expect(hasSessionIdCapture('PostToolUse')).toBe(false);
     expect(hasSessionIdCapture('Stop')).toBe(false);
     expect(hasSessionIdCapture('PermissionRequest')).toBe(false);

@@ -187,7 +187,7 @@ with open(os.path.join(status_dir,sid+".events"),"a") as f:
     cleaned[event] = existing;
   }
 
-  // Inspector-only events
+  // Inspector-only events: log to .events file without changing session status.
   const inspectorOnlyEvents: Record<string, InspectorEventType> = {
     PreToolUse: 'pre_tool_use',
   };
