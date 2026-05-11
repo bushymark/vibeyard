@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import {
+  boardMcpServerScriptPath,
   createBoardSessionBinding,
   ensureProviderBoardMcpConfig,
   forwardBoardToolRequestForTesting,
@@ -25,6 +26,17 @@ describe('board-mcp-gateway session bindings', () => {
   it('creates and resolves a session token', () => {
     const token = createBoardSessionBinding('session-1');
     expect(resolveBoardSessionToken(token)).toEqual({ sessionId: 'session-1' });
+  });
+});
+
+describe('boardMcpServerScriptPath', () => {
+  it('uses the bundled server in development output', () => {
+    expect(boardMcpServerScriptPath('/repo/dist/main/main')).toBe(path.join('/repo', 'dist', 'main', 'main', 'board-mcp-stdio-bundle.js'));
+  });
+
+  it('uses the unpacked bundled server from packaged app output', () => {
+    const appAsarDir = path.join('/Applications', 'Vibeyard.app', 'Contents', 'Resources', 'app.asar', 'dist', 'main', 'main');
+    expect(boardMcpServerScriptPath(appAsarDir)).toBe(path.join('/Applications', 'Vibeyard.app', 'Contents', 'Resources', 'app.asar.unpacked', 'dist', 'main', 'main', 'board-mcp-stdio-bundle.js'));
   });
 });
 

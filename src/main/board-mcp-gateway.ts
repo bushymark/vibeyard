@@ -31,8 +31,13 @@ export function getBoardMcpGatewayPort(): number | null {
   return port;
 }
 
-export function boardMcpServerScriptPath(): string {
-  return path.join(__dirname, 'board-mcp-stdio.js');
+export function boardMcpServerScriptPath(baseDir = __dirname): string {
+  const scriptPath = path.join(baseDir, 'board-mcp-stdio-bundle.js');
+  const asarSegment = `${path.sep}app.asar${path.sep}`;
+  if (scriptPath.includes(asarSegment)) {
+    return scriptPath.replace(asarSegment, `${path.sep}app.asar.unpacked${path.sep}`);
+  }
+  return scriptPath;
 }
 
 export async function startBoardMcpGateway(win: BrowserWindow): Promise<number> {

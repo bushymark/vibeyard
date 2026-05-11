@@ -37,7 +37,8 @@
   },
   "main": "./dist/main/main/main.js",
   "scripts": {
-    "build": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json && npm run build:renderer && npm run copy-assets",
+    "build": "tsc -p tsconfig.main.json && npm run build:board-mcp && tsc -p tsconfig.preload.json && npm run build:renderer && npm run copy-assets",
+    "build:board-mcp": "esbuild src/main/board-mcp-stdio.ts --bundle --outfile=dist/main/main/board-mcp-stdio-bundle.js --platform=node --format=cjs --target=node18",
     "build:renderer": "esbuild src/renderer/index.ts --bundle --outfile=dist/renderer/index.js --platform=browser --format=iife --target=es2022 --sourcemap --loader:.ts=ts",
     "copy-assets": "node scripts/copy-assets.js",
     "start": "npm run build && electron .",
@@ -57,6 +58,9 @@
       "dist/main/**/*",
       "dist/preload/**/*",
       "dist/renderer/**/*"
+    ],
+    "asarUnpack": [
+      "dist/main/main/board-mcp-stdio-bundle.js"
     ],
     "mac": {
       "target": [
